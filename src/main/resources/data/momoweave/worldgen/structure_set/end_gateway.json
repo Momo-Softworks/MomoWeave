@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "momoweave:end_gateway",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 14357617,
+    "spacing": 15,
+    "separation": 10
+  }
+}

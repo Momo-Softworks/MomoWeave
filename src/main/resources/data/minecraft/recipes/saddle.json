@@ -1,0 +1,31 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern":
+  [
+    "LLL",
+    " S ",
+    " N "
+  ],
+  "key":
+  {
+    "L":
+    {
+      "tag": "forge:leather"
+    },
+    "S":
+    {
+      "tag": "forge:string"
+    },
+    "N":
+    {
+      "tag": "forge:nuggets/iron"
+    }
+  },
+  "result":
+  {
+    "item": "minecraft:saddle",
+    "count": 1
+  },
+  "show_notification": true  
+}

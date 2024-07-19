@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern":
+  [
+    "FF",
+    "FF"
+  ],
+  "key":
+  {
+    "F":
+    {
+      "item": "minecraft:rotten_flesh"
+    }
+  },
+  "result":
+  {
+    "item": "momoweave:rotten_leather",
+    "count": 1
+  },
+  "show_notification": true  
+}

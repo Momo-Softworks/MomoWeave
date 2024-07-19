@@ -1,0 +1,31 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern":
+  [
+    "N N",
+    "NSN",
+    "NRN"
+  ],
+  "key":
+  {
+    "N":
+    {
+      "tag": "forge:nuggets/gold"
+    },
+    "S":
+    {
+      "tag": "forge:rods/wooden"
+    },
+	"R":
+	{
+	  "tag": "forge:dusts/redstone"
+	}
+  },
+  "result":
+  {
+    "item": "minecraft:powered_rail",
+    "count": 8
+  },
+  "show_notification": true  
+}

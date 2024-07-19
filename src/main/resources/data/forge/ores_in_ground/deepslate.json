@@ -1,0 +1,30 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:deepslate_coal_ore",
+    "minecraft:deepslate_iron_ore",
+    "minecraft:deepslate_copper_ore",
+    "minecraft:deepslate_gold_ore",
+    "minecraft:deepslate_redstone_ore",
+    "minecraft:deepslate_emerald_ore",
+    "minecraft:deepslate_lapis_ore",
+    "minecraft:deepslate_diamond_ore",
+    "ad_astra:deepslate_desh_ore",
+    "ad_astra:deepslate_ice_shard_ore",
+    "ad_astra:deepslate_ostrum_ore",
+    "ad_astra:deepslate_calorite_ore",
+    "create:deepslate_zinc_ore",
+    "divinerpg:arlemite_ore_deepslate",
+    "divinerpg:realmite_ore_deepslate",
+    "divinerpg:rupee_ore_deepslate",
+    "forbidden_arcanus:deepslate_arcane_crystal_ore",
+    "immersiveengineering:deepslate_ore_aluminium",
+    "immersiveengineering:deepslate_ore_lead",
+    "immersiveengineering:deepslate_ore_silver",
+    "immersiveengineering:deepslate_ore_nickel",
+    "immersiveengineering:deepslate_ore_uranium",
+    "mysticalagriculture:deepslate_prosperity_ore",
+    "mysticalagriculture:deepslate_inferium_ore",
+    "theurgy:deepslate_sal_ammoniac_ore"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "feature": "minecraft:end_gateway_return",
+  "placement": [
+    {
+      "type": "minecraft:count",
+      "count": 0
+    }
+  ]
+}

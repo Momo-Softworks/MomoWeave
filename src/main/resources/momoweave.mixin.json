@@ -1,0 +1,24 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.momosoftworks.momoweave.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "momoweave.refmap.json",
+  "mixins": [
+    "MixinAddEnchantmentGlint",
+    "MixinBeforeServerStart",
+    "MixinBiomeOrePassthrough",
+    "MixinFixVoidStructures",
+    "MixinLootEntryBanItems",
+    "MixinLootTables",
+    "MixinPreventRocketFlight",
+    "MixinRespawnAnchor",
+    "MixinTravelToEnd",
+    "MixinTravelToEnd$DisablePlatformPlayer"
+  ],
+  "client": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

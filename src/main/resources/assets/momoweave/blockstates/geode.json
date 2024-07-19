@@ -1,0 +1,24 @@
+{
+  "variants":
+  {
+    "facing=north":
+    {
+      "model": "momoweave:block/geode"
+    },
+    "facing=east":
+    {
+      "model": "momoweave:block/geode",
+      "y": 90
+    },
+    "facing=south":
+    {
+      "model": "momoweave:block/geode",
+      "y": 180
+    },
+    "facing=west":
+    {
+      "model": "momoweave:block/geode",
+      "y": 270
+    }
+  }
+}
