@@ -104,6 +104,7 @@ dependencies {
     runtimeOnly fg.deobf("curse.maven:biomes-o-plenty-220318:4764804")
     runtimeOnly fg.deobf("curse.maven:terrablender-563928:5378180")
     runtimeOnly fg.deobf("curse.maven:terralith-513688:5351328")
+    runtimeOnly fg.deobf("curse.maven:mna-406360:5559768")
     implementation fg.deobf("curse.maven:curios-309927:5367944-sources-5367945")
 
     //runtimeOnly fg.deobf("curse.maven:apotheosis-313970:5486368")

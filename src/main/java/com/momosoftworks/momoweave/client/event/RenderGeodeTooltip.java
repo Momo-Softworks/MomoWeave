@@ -1,6 +1,7 @@
 package com.momosoftworks.momoweave.client.event;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import com.momosoftworks.momoweave.common.blockentity.GeodeBlockEntity;
 import com.momosoftworks.momoweave.core.init.BlockInit;
 import net.minecraft.ChatFormatting;
@@ -12,6 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.stats.Stats;
 import net.minecraft.stats.StatsCounter;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -34,8 +36,11 @@ public class RenderGeodeTooltip
 {
     static final Method GET_FOV = ObfuscationReflectionHelper.findMethod(GameRenderer.class, "m_109141_",
                                                                          Camera.class, float.class, boolean.class);
+    static final Method BOB_VIEW = ObfuscationReflectionHelper.findMethod(GameRenderer.class, "m_109138_",
+                                                                          PoseStack.class, float.class);
     static
     {   GET_FOV.setAccessible(true);
+        BOB_VIEW.setAccessible(true);
     }
 
     @SubscribeEvent
@@ -56,12 +61,10 @@ public class RenderGeodeTooltip
                 if (stats.getValue(Stats.BLOCK_MINED, ore) > 0 || stats.getValue(Stats.BLOCK_MINED, getVariant(ore)) > 0)
                 {   blockName = I18n.get(ore.getDescriptionId());
                 }
-                List<Component> tooltip = List.of(Component.literal("Geode").withStyle(ChatFormatting.YELLOW),
-                                                  Component.literal(blockName).withStyle(ChatFormatting.GRAY));
+                List<FormattedCharSequence> tooltip = List.of(Component.literal("Geode").withStyle(ChatFormatting.YELLOW).getVisualOrderText(),
+                                                              Component.literal(blockName).withStyle(ChatFormatting.GRAY).getVisualOrderText());
                 Vec3 screenPos = getScreenPosition(blockHitResult.getBlockPos().getCenter(), Minecraft.getInstance().gameRenderer.getMainCamera());
-                event.getGuiGraphics().renderComponentTooltip(Minecraft.getInstance().font, tooltip,
-                                                              (int) screenPos.x,
-                                                              (int) screenPos.y);
+                event.getGuiGraphics().renderTooltip(Minecraft.getInstance().font, tooltip, (int) screenPos.x, (int) screenPos.y);
             }
         }
     }
@@ -89,14 +92,26 @@ public class RenderGeodeTooltip
         return block;
     }
 
-    public static Vec3 getScreenPosition(Vec3 objectPosition, Camera camera) {
+    public static Vec3 getScreenPosition(Vec3 objectPosition, Camera camera)
+    {
         Minecraft mc = Minecraft.getInstance();
 
         // Get the view matrix
         PoseStack poseStack = new PoseStack();
         //poseStack.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(180.0F));
-        poseStack.mulPose(com.mojang.math.Axis.XP.rotationDegrees(camera.getXRot()));
-        poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(-camera.getYRot()));
+        poseStack.mulPose(Axis.XP.rotationDegrees(camera.getXRot()));
+        poseStack.mulPose(Axis.YP.rotationDegrees(-camera.getYRot()));
+        // Apply view bobbing transformations
+        if (Minecraft.getInstance().options.bobView().get())
+        {
+            try
+            {   PoseStack bobStack = new PoseStack();
+                BOB_VIEW.invoke(mc.gameRenderer, bobStack, mc.getFrameTime());
+                //mul the poseStack by the bobStack's y position, and negative of the x position
+                poseStack.translate(0, bobStack.last().pose().get(3, 1), 0);
+            }
+            catch (Exception ignored) {}
+        }
         Matrix4f viewMatrix = poseStack.last().pose();
 
         // Get the projection matrix
@@ -107,6 +122,7 @@ public class RenderGeodeTooltip
         catch (Exception e)
         {   fov = 70.0F;
         }
+
         float aspectRatio = (float)mc.getWindow().getGuiScaledWidth() / (float)mc.getWindow().getGuiScaledHeight();
         float nearPlane = 0.05F;
         float farPlane = mc.options.renderDistance().get() * 16.0F;
@@ -127,7 +143,8 @@ public class RenderGeodeTooltip
         viewProjectionMatrix.transform(pos);
 
         // Perform perspective division
-        if (pos.w > 0.0) {
+        if (pos.w > 0.0)
+        {
             pos.x /= pos.w;
             pos.y /= pos.w;
             pos.z /= pos.w;
