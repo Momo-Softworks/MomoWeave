@@ -6,8 +6,10 @@
   "refmap": "momoweave.refmap.json",
   "mixins": [
     "MixinAddEnchantmentGlint",
+    "MixinAddWanderingTrades",
     "MixinBeforeServerStart",
-    "MixinBiomeOrePassthrough",
+    "MixinDropItems",
+    "MixinDropItems$InjectDestroyed",
     "MixinFixVoidStructures",
     "MixinLootEntryBanItems",
     "MixinLootTables",
