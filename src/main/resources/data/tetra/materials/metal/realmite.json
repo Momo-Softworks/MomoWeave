@@ -1,0 +1,33 @@
+{
+  "key": "realmite",
+  "category": "metal",
+  "primary": 4,
+  "secondary": 2,
+  "tertiary": 0,
+  "durability": 326,
+  "integrityCost": 2,
+  "integrityGain": 5,
+  "magicCapacity": 60,
+  "toolLevel": "minecraft:diamond",
+  "toolEfficiency": 7,
+  "tints": {
+    "glyph": "FFA426",
+    "texture": "e18c29"
+  },
+  "textures": [
+    "shiny",
+    "metal",
+    "default"
+  ],
+  "material" : {
+    "items": [
+      "divinerpg:realmite_ingot"
+    ]
+  },
+  "improvements": {
+    "arrested": 0
+  },
+  "requiredTools": {
+    "hammer_dig": "minecraft:iron"
+  }
+}

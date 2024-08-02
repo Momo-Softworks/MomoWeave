@@ -1,0 +1,32 @@
+{
+  "key": "shadow",
+  "category": "metal",
+  "primary": 2,
+  "secondary": 0,
+  "tertiary": 0,
+  "durability": 500,
+  "integrityCost": 2,
+  "integrityGain": 7,
+  "magicCapacity": 20,
+  "toolLevel": "minecraft:iron",
+  "toolEfficiency": 20,
+  "tints": {
+    "glyph": "4e4e4e",
+    "texture": "4e4e4e"
+  },
+  "textures": [
+    "metal",
+    "crude"
+  ],
+  "material" : {
+    "items": [
+      "divinerpg:shadow_bar"
+    ]
+  },
+  "improvements": {
+    "arrested": 0
+  },
+  "requiredTools": {
+    "hammer_dig": "minecraft:iron"
+  }
+}

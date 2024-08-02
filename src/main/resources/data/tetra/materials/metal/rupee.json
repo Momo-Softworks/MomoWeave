@@ -1,0 +1,33 @@
+{
+  "key": "rupee",
+  "category": "metal",
+  "primary": 9,
+  "secondary": 6,
+  "tertiary": 10,
+  "durability": 1635,
+  "integrityCost": 2,
+  "integrityGain": 8,
+  "magicCapacity": 100,
+  "toolLevel": "minecraft:diamond",
+  "toolEfficiency": 11,
+  "tints": {
+    "glyph": "1786FF",
+    "texture": "3BB6FF"
+  },
+  "textures": [
+    "shiny",
+    "metal",
+    "default"
+  ],
+  "material" : {
+    "items": [
+      "divinerpg:rupee_ingot"
+    ]
+  },
+  "improvements": {
+    "arrested": 0
+  },
+  "requiredTools": {
+    "hammer_dig": "minecraft:iron"
+  }
+}
