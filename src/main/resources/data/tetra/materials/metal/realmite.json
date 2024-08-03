@@ -24,10 +24,7 @@
       "divinerpg:realmite_ingot"
     ]
   },
-  "improvements": {
-    "arrested": 0
-  },
   "requiredTools": {
-    "hammer_dig": "minecraft:iron"
+    "hammer_dig": "minecraft:stone"
   }
 }

@@ -24,9 +24,6 @@
       "divinerpg:torridite_ingot"
     ]
   },
-  "improvements": {
-    "arrested": 0
-  },
   "requiredTools": {
     "hammer_dig": "minecraft:iron"
   }
