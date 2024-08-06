@@ -26,11 +26,9 @@ import java.util.*;
 
 public class LostDeathBagsData extends SavedData
 {
-    public static final int BAG_EXPIRATION_TIME = 20*30;//20*60*7;
+    public static final int BAG_EXPIRATION_TIME = 20*60*7;
 
     private final Multimap<UUID, ItemStack> lostBags = HashMultimap.create();
-    private final List<TickingBag> bagExpirationTicker = new ArrayList<>();
-    private final List<ItemStack> expiredBags = new ArrayList<>();
 
     private final Map<UUID, Integer> wanderingTraderSpawnTicker = new HashMap<>();
 
@@ -39,20 +37,6 @@ public class LostDeathBagsData extends SavedData
 
     public Multimap<UUID, ItemStack> getLostBags()
     {   return lostBags;
-    }
-
-    public void registerBag(ItemStack bag)
-    {
-        if (bagExpirationTicker.stream().noneMatch(tickingBag -> ItemStack.isSameItemSameTags(tickingBag.getBag(), bag)))
-        {
-            bagExpirationTicker.add(new TickingBag(bag, BAG_EXPIRATION_TIME));
-            this.setDirty();
-        }
-    }
-
-    public void unregisterBag(ItemStack bag)
-    {   bagExpirationTicker.removeIf(tickingBag -> ItemStack.isSameItemSameTags(tickingBag.getBag(), bag));
-        this.setDirty();
     }
 
     public void addLostBag(UUID uuid, ItemStack bag)
@@ -65,41 +49,8 @@ public class LostDeathBagsData extends SavedData
         this.setDirty();
     }
 
-    public List<ItemStack> getExpiredBags()
-    {   return expiredBags;
-    }
-
-    public void removeExpiredBag(ItemStack bag)
-    {   expiredBags.remove(bag);
-        this.setDirty();
-    }
-
-    public void invalidateBag(ItemStack bag)
-    {   expiredBags.add(bag);
-        this.setDirty();
-    }
-
     public void tick()
-    {
-        this.tickBagExpirationCountdowns();
-        this.tickTraderCountdowns();
-    }
-
-    public void tickBagExpirationCountdowns()
-    {
-        bagExpirationTicker.removeIf(tickingBag ->
-        {
-             ItemStack bag = tickingBag.getBag();
-             int ticks = tickingBag.getTime();
-             if (ticks <= 0)
-             {  this.invalidateBag(bag);
-                 return true;
-             }
-             else
-             {  tickingBag.setTime(ticks - 1);
-                 return false;
-             }
-       });
+    {   this.tickTraderCountdowns();
     }
 
     public void tickTraderCountdowns()
@@ -194,22 +145,6 @@ public class LostDeathBagsData extends SavedData
         }
         nbt.put("DeathBags", bagsNBT);
 
-        ListTag bagInvalidationTimes = new ListTag();
-        for (TickingBag entry : bagExpirationTicker)
-        {
-            CompoundTag bagNBT = new CompoundTag();
-            bagNBT.putInt("Ticks", entry.getTime());
-            bagNBT.put("Item", entry.getBag().save(new CompoundTag()));
-            bagInvalidationTimes.add(bagNBT);
-        }
-        nbt.put("DeathBagInvalidationTimes", bagInvalidationTimes);
-
-        ListTag invalidatedBags = new ListTag();
-        for (ItemStack bag : this.expiredBags)
-        {   invalidatedBags.add(bag.save(new CompoundTag()));
-        }
-        nbt.put("InvalidatedBags", invalidatedBags);
-
         ListTag wanderingTraderSpawnTimes = new ListTag();
         for (Map.Entry<UUID, Integer> entry : wanderingTraderSpawnTicker.entrySet())
         {
@@ -234,20 +169,6 @@ public class LostDeathBagsData extends SavedData
             data.lostBags.put(uuid, stack);
         }
 
-        ListTag bagInvalidationTimes = nbt.getList("DeathBagInvalidationTimes", 10);
-        for (int i = 0; i < bagInvalidationTimes.size(); i++)
-        {
-            CompoundTag bagNBT = bagInvalidationTimes.getCompound(i);
-            ItemStack bag = ItemStack.of(bagNBT.getCompound("Item"));
-            int ticks = bagNBT.getInt("Ticks");
-            data.bagExpirationTicker.add(new TickingBag(bag, ticks));
-        }
-
-        ListTag invalidatedBags = nbt.getList("InvalidatedBags", 10);
-        for (int i = 0; i < invalidatedBags.size(); i++)
-        {   data.expiredBags.add(ItemStack.of(invalidatedBags.getCompound(i)));
-        }
-
         ListTag wanderingTraderSpawnTimes = nbt.getList("WanderingTraderSpawnTimes", 10);
         for (int i = 0; i < wanderingTraderSpawnTimes.size(); i++)
         {
@@ -257,28 +178,5 @@ public class LostDeathBagsData extends SavedData
             data.wanderingTraderSpawnTicker.put(player, ticks);
         }
         return data;
-    }
-
-    static class TickingBag
-    {
-        private final ItemStack bag;
-        private int time;
-
-        public TickingBag(ItemStack bag, int time)
-        {   this.bag = bag;
-            this.time = time;
-        }
-
-        public ItemStack getBag()
-        {   return bag;
-        }
-
-        public int getTime()
-        {   return time;
-        }
-
-        public void setTime(int time)
-        {   this.time = time;
-        }
     }
 }

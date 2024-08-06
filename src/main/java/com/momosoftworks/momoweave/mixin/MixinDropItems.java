@@ -76,7 +76,9 @@ public class MixinDropItems
                 BAG.getOrCreateTag().putUUID("Owner", player.getUUID());
                 BAG.getOrCreateTag().putUUID("ID", UUID.randomUUID());
                 BAG.setHoverName(Component.literal(player.getDisplayName().getString() + "'s " + BAG.getHoverName().getString()));
-                WorldHelper.entityDropItem(player, BAG, LostDeathBagsData.BAG_EXPIRATION_TIME);
+                ItemEntity droppedBag = WorldHelper.entityDropItem(player, BAG, LostDeathBagsData.BAG_EXPIRATION_TIME);
+                droppedBag.setPos(droppedBag.position().add(0, -player.getBbHeight()/2, 0));
+                droppedBag.setGlowingTag(true);
             }
         });
     }
