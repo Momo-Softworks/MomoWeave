@@ -1,6 +1,6 @@
 package com.momosoftworks.momoweave.util.compat;
 
-import com.momosoftworks.coldsweat.util.compat.CompatManager;
+import com.momosoftworks.coldsweat.compat.CompatManager;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -12,8 +12,7 @@ public class MomoweaveCompatManager
     static
     {
         if (CompatManager.isCuriosLoaded())
-        {
-            MinecraftForge.EVENT_BUS.register(new Object()
+        {   MinecraftForge.EVENT_BUS.register(new Object()
             {
                 @SubscribeEvent
                 public void cancelCurioDrops(CurioDropsEvent event)

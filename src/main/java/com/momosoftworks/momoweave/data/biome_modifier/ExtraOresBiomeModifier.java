@@ -49,7 +49,7 @@ public record ExtraOresBiomeModifier(boolean useConfigs) implements BiomeModifie
         {   ConfigSettings.compileOres(WorldHelper.getServer());
         }
 
-        ResourceLocation biomeId = RegistryHelper.getBiomeId(biome.value(), RegistryHelper.getRegistryAccess());
+        ResourceLocation biomeId = RegistryHelper.getKey(biome);
         long worldSeed = WorldHelper.getServer().getWorldData().worldGenOptions().seed();
         long randomSeed = worldSeed * new BigInteger(biomeId.toString().getBytes()).intValue();
         Random random = new Random(randomSeed);

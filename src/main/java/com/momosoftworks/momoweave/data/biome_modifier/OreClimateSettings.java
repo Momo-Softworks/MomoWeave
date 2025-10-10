@@ -3,8 +3,10 @@ package com.momosoftworks.momoweave.data.biome_modifier;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.util.math.CSMath;
+import com.momosoftworks.coldsweat.util.serialization.RegistryHelper;
+import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import com.momosoftworks.momoweave.config.ConfigSettings;
-import com.momosoftworks.momoweave.util.WorldHelperExtras;
+import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.StringRepresentable;
@@ -54,10 +56,10 @@ public record OreClimateSettings(List<Temperature> temperatures, List<Humidity> 
     {   return createAny(ConfigSettings.stripOreName(oreId.getPath()));
     }
 
-    public boolean matches(Biome biome)
+    public boolean matches(Holder<Biome> biome)
     {
-        double temperature = CSMath.averagePair(WorldHelperExtras.getBiomeTemperature(biome));
-        double humidity = biome.getModifiedClimateSettings().downfall();
+        double temperature = CSMath.averagePair(WorldHelper.getBiomeTemperatureRange(RegistryHelper.getRegistryAccess(), biome));
+        double humidity = biome.value().getModifiedClimateSettings().downfall();
         return temperatures.stream().anyMatch(temp -> temp == Temperature.get(temperature))
             && humidities.stream().anyMatch(hum -> hum == Humidity.get(humidity));
     }

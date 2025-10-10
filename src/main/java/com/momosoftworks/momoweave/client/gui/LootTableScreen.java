@@ -1,7 +1,7 @@
 package com.momosoftworks.momoweave.client.gui;
 
 import com.mojang.datafixers.util.Either;
-import com.momosoftworks.coldsweat.util.compat.CompatManager;
+import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.serialization.NBTHelper;
 import com.momosoftworks.momoweave.common.container.LootTableMenu;
@@ -156,7 +156,7 @@ public class LootTableScreen extends AbstractContainerScreen<LootTableMenu>
     @SubscribeEvent
     public static void renderEnchantmentTooltip(RenderTooltipEvent.GatherComponents event)
     {
-        int index = CompatManager.getLegendaryTTStartIndex(event.getTooltipElements());
+        int index = CompatManager.LegendaryTooltips.getTooltipStartIndex(event.getTooltipElements());
         if (index == -1) index = 1;
 
         ItemStack stack = event.getItemStack();

@@ -31,14 +31,14 @@ public class ConfigSettings
     public static final Map<ResourceLocation, OreClimateSettings> CONFIGURED_FAVORED_ORES = new HashMap<>();
     public static final Multimap<Holder<Biome>, Block> FAVORED_ORE_BLOCKS_PER_BIOME = HashMultimap.create();
 
-    public static final DynamicHolder<Double> FAVORED_ORE_MULTIPLIER = DynamicHolder.create(MainSettingsConfig.favoredOreMultiplier);
-    public static final DynamicHolder<Double> UNFAVORED_ORE_MULTIPLIER = DynamicHolder.create(MainSettingsConfig.unfavoredOreMultiplier);
-    public static final DynamicHolder<List<? extends Integer>> FAVORED_ORE_COUNT_PER_BIOME = DynamicHolder.create(MainSettingsConfig.favoredOresPerBiome);
+    public static final DynamicHolder<Double> FAVORED_ORE_MULTIPLIER = DynamicHolder.create(null, MainSettingsConfig.favoredOreMultiplier);
+    public static final DynamicHolder<Double> UNFAVORED_ORE_MULTIPLIER = DynamicHolder.create(null,MainSettingsConfig.unfavoredOreMultiplier);
+    public static final DynamicHolder<List<? extends Integer>> FAVORED_ORE_COUNT_PER_BIOME = DynamicHolder.create(null,MainSettingsConfig.favoredOresPerBiome);
 
     public static Map<ResourceLocation, OreClimateSettings> getQualifyingOresForBiome(Holder<Biome> biome)
     {
         return ConfigSettings.CONFIGURED_FAVORED_ORES.entrySet().stream()
-                .filter(entry -> entry.getValue().matches(biome.value()))
+                .filter(entry -> entry.getValue().matches(biome))
                 .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
     }
 

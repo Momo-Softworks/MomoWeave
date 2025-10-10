@@ -95,7 +95,7 @@ dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
-    implementation fg.deobf("curse.maven:cold-sweat-506194:5520713-sources-5520783")
+    implementation fg.deobf("curse.maven:cold-sweat-506194:7091586-sources-7091587")
 
     runtimeOnly fg.deobf("curse.maven:official-divinerpg-363543:5049334")
     runtimeOnly fg.deobf("curse.maven:immersive-engineering-231951:5224387")
@@ -109,9 +109,10 @@ dependencies {
     runtimeOnly fg.deobf("curse.maven:jei-238222:5576551")
     runtimeOnly fg.deobf("curse.maven:just-enough-resources-jer-240630:5057220")
     runtimeOnly fg.deobf("curse.maven:jer-integration-506948:5281932")
-    runtimeOnly fg.deobf("curse.maven:mna-406360:5559768")
     implementation fg.deobf("curse.maven:curios-309927:5367944-sources-5367945")
-
+    runtimeOnly fg.deobf("curse.maven:ice-and-fire-dragons-264231:5122408")
+    runtimeOnly fg.deobf("curse.maven:citadel-331936:5559513")
+    //runtimeOnly fg.deobf("curse.maven:mna-406360:5559768")
     //runtimeOnly fg.deobf("curse.maven:apotheosis-313970:5486368")
     //runtimeOnly "curse.maven:wythers-490686:4127875"
 }

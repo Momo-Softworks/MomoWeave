@@ -1,11 +1,9 @@
 package com.momosoftworks.momoweave.mixin;
 
-import com.momosoftworks.coldsweat.util.compat.CompatManager;
-import com.momosoftworks.coldsweat.util.math.CSMath;
+import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import com.momosoftworks.momoweave.common.capability.ModCapabilities;
 import com.momosoftworks.momoweave.common.level.LostDeathBagsData;
-import com.momosoftworks.momoweave.common.level.SavedDataHelper;
 import com.momosoftworks.momoweave.core.init.ItemInit;
 import com.momosoftworks.momoweave.event.common.ItemEntityDestroyedEvent;
 import net.minecraft.network.chat.Component;
@@ -14,7 +12,6 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import net.minecraftforge.common.MinecraftForge;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -40,7 +37,7 @@ public class MixinDropItems
             // Add curios to the bag
             if (CompatManager.isCuriosLoaded())
             {
-                for (ItemStack curio : CompatManager.getCurios(self.player))
+                for (ItemStack curio : CompatManager.Curios.getCurios(self.player))
                 {
                     if (!curio.isEmpty())
                     {   cap.addItem(curio.copy());

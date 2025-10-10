@@ -38,10 +38,10 @@ public class WhereAmICommand extends BaseCommand
                                                                    .getKey(source.getLevel().getBiome(BlockPos.containing(source.getPosition())).value()).toString())
                                                                    .withStyle(ChatFormatting.GRAY), false);
 
-            source.sendSuccess(() -> Component.literal("Temperature: " + Temperature.getTemperatureAt(BlockPos.containing(source.getPosition()), source.getLevel())).withStyle(ChatFormatting.GRAY), false);
+            source.sendSuccess(() -> Component.literal("Temperature: " + WorldHelper.getTemperatureAt(source.getLevel(), BlockPos.containing(source.getPosition()))).withStyle(ChatFormatting.GRAY), false);
 
             source.sendSuccess(() -> Component.literal("Structure: " + source.registryAccess().registryOrThrow(Registries.STRUCTURE)
-                                                                       .getKey(WorldHelper.getStructureAt(source.getLevel(), BlockPos.containing(source.getPosition()))))
+                                                                       .getKey(WorldHelper.getStructureAt(source.getLevel(), BlockPos.containing(source.getPosition())).map(Holder::value).orElse(null)))
                                                                        .withStyle(ChatFormatting.GRAY), false);
 
             source.sendSuccess(() -> Component.literal("Preferred Ore: " + ForgeRegistries.BLOCKS.getKey(ConfigSettings.FAVORED_ORE_BLOCKS_PER_BIOME.get(biome).stream().findFirst().orElse(null))), false);
