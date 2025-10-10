@@ -7,6 +7,7 @@ import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import com.momosoftworks.momoweave.Momoweave;
 import com.momosoftworks.momoweave.config.ConfigSettings;
 import com.momosoftworks.momoweave.core.init.BiomeCodecInit;
+import com.momosoftworks.momoweave.event.common.BeforeServerStartEvent;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
@@ -29,6 +30,8 @@ import net.minecraft.world.level.levelgen.placement.*;
 import net.minecraftforge.common.Tags;
 import net.minecraftforge.common.world.BiomeModifier;
 import net.minecraftforge.common.world.ModifiableBiomeInfo;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -37,10 +40,18 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Mod.EventBusSubscriber
 public record ExtraOresBiomeModifier(boolean useConfigs) implements BiomeModifier
 {
     public static final Map<ResourceLocation, Double> ORE_SPAWN_PROBABILITIES = new HashMap<>();
     //5813168463475788799 -246978.00 105.46 989342.10
+
+    private static RegistryAccess REGISTRY_ACCESS = null;
+
+    @SubscribeEvent
+    public static void getRegistryAccess(BeforeServerStartEvent event)
+    {   REGISTRY_ACCESS = event.getServer().registryAccess();
+    }
 
     @Override
     public void modify(Holder<Biome> biome, Phase phase, ModifiableBiomeInfo.BiomeInfo.Builder builder)
@@ -58,7 +69,7 @@ public record ExtraOresBiomeModifier(boolean useConfigs) implements BiomeModifie
 
         if (phase == Phase.ADD && biome.is(BiomeTags.IS_OVERWORLD) && !biome.is(Tags.Biomes.IS_UNDERGROUND))
         {
-            Registry<PlacedFeature> featureRegistry = RegistryHelper.getRegistry(Registries.PLACED_FEATURE);
+            Registry<PlacedFeature> featureRegistry = REGISTRY_ACCESS.registryOrThrow(Registries.PLACED_FEATURE);
 
             PlacedFeature geodeFeature = featureRegistry.get(new ResourceLocation(Momoweave.MOD_ID, "geode"));
             builder.getGenerationSettings().addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, Holder.direct(geodeFeature));
@@ -69,7 +80,7 @@ public record ExtraOresBiomeModifier(boolean useConfigs) implements BiomeModifie
                 int oresToAdd = (int) CSMath.blend(ConfigSettings.FAVORED_ORE_COUNT_PER_BIOME.get().get(0),
                                                    ConfigSettings.FAVORED_ORE_COUNT_PER_BIOME.get().get(1),
                                                    random.nextDouble(), 0, 1);
-                List<ResourceLocation> oreCandidates = ConfigSettings.CONFIGURED_FAVORED_ORES.keySet().stream().filter(entry -> biomeHasFeature(biomeFeaturesReadonly, entry, RegistryHelper.getRegistryAccess())).toList();
+                List<ResourceLocation> oreCandidates = ConfigSettings.CONFIGURED_FAVORED_ORES.keySet().stream().filter(entry -> biomeHasFeature(biomeFeaturesReadonly, entry, REGISTRY_ACCESS)).toList();
                 for (int i = 0; i < oresToAdd; i++)
                 {
                     ResourceLocation randomOre = oreCandidates.get(random.nextInt(oreCandidates.size()));
@@ -93,10 +104,10 @@ public record ExtraOresBiomeModifier(boolean useConfigs) implements BiomeModifie
 
         else if (phase == Phase.AFTER_EVERYTHING && biome.is(BiomeTags.IS_OVERWORLD) && !biome.is(Tags.Biomes.IS_UNDERGROUND))
         {
-            Registry<PlacedFeature> featureRegistry = RegistryHelper.getRegistry(Registries.PLACED_FEATURE);
+            Registry<PlacedFeature> featureRegistry = REGISTRY_ACCESS.registryOrThrow(Registries.PLACED_FEATURE);
 
             // Get a random feature to increase based on the random seed
-            Map<ResourceLocation, OreClimateSettings> availableOres = getAvailableOres(biome, biomeFeaturesReadonly, RegistryHelper.getRegistryAccess());
+            Map<ResourceLocation, OreClimateSettings> availableOres = getAvailableOres(biome, biomeFeaturesReadonly, REGISTRY_ACCESS);
             if (availableOres.isEmpty())
             {
                 Momoweave.LOGGER.error("No favored ore candidates found for {}", biome.unwrapKey().get().location());
