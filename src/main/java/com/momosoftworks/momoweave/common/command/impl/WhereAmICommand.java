@@ -44,7 +44,7 @@ public class WhereAmICommand extends BaseCommand
                                                                        .getKey(WorldHelper.getStructureAt(source.getLevel(), BlockPos.containing(source.getPosition())).map(Holder::value).orElse(null)))
                                                                        .withStyle(ChatFormatting.GRAY), false);
 
-            source.sendSuccess(() -> Component.literal("Preferred Ore: " + ForgeRegistries.BLOCKS.getKey(ConfigSettings.FAVORED_ORE_BLOCKS_PER_BIOME.get(biome).stream().findFirst().orElse(null))), false);
+            source.sendSuccess(() -> Component.literal("Preferred Ores: " + ConfigSettings.FAVORED_ORE_BLOCKS_PER_BIOME.get(biome).stream().map(ForgeRegistries.BLOCKS::getKey).toList()), false);
         }
         return 1;
     }
