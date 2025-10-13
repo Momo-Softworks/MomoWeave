@@ -30,6 +30,7 @@ import org.joml.Vector4f;
 
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Optional;
 
 @Mod.EventBusSubscriber(Dist.CLIENT)
 public class RenderGeodeTooltip
@@ -61,10 +62,10 @@ public class RenderGeodeTooltip
                 if (stats.getValue(Stats.BLOCK_MINED, ore) > 0 || stats.getValue(Stats.BLOCK_MINED, getVariant(ore)) > 0)
                 {   blockName = I18n.get(ore.getDescriptionId());
                 }
-                List<FormattedCharSequence> tooltip = List.of(Component.literal("Geode").withStyle(ChatFormatting.YELLOW).getVisualOrderText(),
-                                                              Component.literal(blockName).withStyle(ChatFormatting.GRAY).getVisualOrderText());
+                List<Component> tooltip = List.of(Component.literal("Geode").withStyle(ChatFormatting.YELLOW),
+                                                              Component.literal(blockName).withStyle(ChatFormatting.GRAY));
                 Vec3 screenPos = getScreenPosition(blockHitResult.getBlockPos().getCenter(), Minecraft.getInstance().gameRenderer.getMainCamera());
-                event.getGuiGraphics().renderTooltip(Minecraft.getInstance().font, tooltip, (int) screenPos.x, (int) screenPos.y);
+                event.getGuiGraphics().renderTooltip(Minecraft.getInstance().font, tooltip, Optional.empty(), (int) screenPos.x, (int) screenPos.y);
             }
         }
     }
