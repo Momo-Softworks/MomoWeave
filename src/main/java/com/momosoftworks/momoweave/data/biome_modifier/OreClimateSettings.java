@@ -21,7 +21,7 @@ public record OreClimateSettings(List<Temperature> temperatures, List<Humidity> 
     public static final Codec<OreClimateSettings> CODEC = RecordCodecBuilder.create(inst -> inst.group(
         Temperature.CODEC.listOf().fieldOf("temperatures").forGetter(OreClimateSettings::temperatures),
         Humidity.CODEC.listOf().fieldOf("humidities").forGetter(OreClimateSettings::humidities),
-        Altitude.CODEC.listOf().fieldOf("altitudes").forGetter(OreClimateSettings::altitudes),
+        Altitude.CODEC.listOf().optionalFieldOf("altitudes", List.of()).forGetter(OreClimateSettings::altitudes),
         Codec.STRING.fieldOf("ore_name").forGetter(OreClimateSettings::oreName)
     ).apply(inst, OreClimateSettings::new));
 
@@ -62,14 +62,6 @@ public record OreClimateSettings(List<Temperature> temperatures, List<Humidity> 
         double humidity = biome.value().getModifiedClimateSettings().downfall();
         return temperatures.stream().anyMatch(temp -> temp == Temperature.get(temperature))
             && humidities.stream().anyMatch(hum -> hum == Humidity.get(humidity));
-    }
-
-    public int minY()
-    {   return altitudes.stream().mapToInt(Altitude::getMin).min().orElse(0);
-    }
-
-    public int maxY()
-    {   return altitudes.stream().mapToInt(Altitude::getMax).max().orElse(0);
     }
 
     public enum Temperature implements StringRepresentable

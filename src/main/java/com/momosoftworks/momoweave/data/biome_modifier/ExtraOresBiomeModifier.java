@@ -144,11 +144,15 @@ public record ExtraOresBiomeModifier(boolean useConfigs) implements BiomeModifie
                     // Change the generation settings of the favored ore
                     if (favoredOreSettings != null)
                     {
-                        // Make a copy of the favored ore with custom height range
-                        HeightRangePlacement heightRange = HeightRangePlacement.of(UniformHeight.of(VerticalAnchor.absolute(favoredOreSettings.minY()),
-                                                                                                    VerticalAnchor.absolute(favoredOreSettings.maxY())));
+                        // Inject custom height ranges
                         newPlacement.removeIf(mod -> mod instanceof HeightRangePlacement);
-                        newPlacement.add(heightRange);
+                        for (OreClimateSettings.Altitude altitude : favoredOreSettings.altitudes())
+                        {
+                            newPlacement.add(HeightRangePlacement.of(UniformHeight.of(
+                                    VerticalAnchor.absolute(altitude.getMin()),
+                                    VerticalAnchor.absolute(altitude.getMax())
+                            )));
+                        }
                         CountPlacement count = newPlacement.stream().filter(mod -> mod instanceof CountPlacement).map(mod -> (CountPlacement) mod).findFirst().orElse(null);
                         if (count != null)
                         {
