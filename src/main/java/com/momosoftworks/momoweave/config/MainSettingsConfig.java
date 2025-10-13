@@ -1,11 +1,19 @@
 package com.momosoftworks.momoweave.config;
 
-import com.momosoftworks.coldsweat.util.world.WorldHelper;
-import com.momosoftworks.momoweave.util.SchedulerHelper;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
+import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguration;
+import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.Tags;
+import net.minecraftforge.event.server.ServerStartedEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -14,8 +22,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.function.Supplier;
 
+@Mod.EventBusSubscriber
 public class MainSettingsConfig
 {
     private static final ForgeConfigSpec SPEC;
@@ -114,25 +122,38 @@ public class MainSettingsConfig
         BUILDER.pop();
 
         SPEC = BUILDER.build();
+    }
 
-
-        Supplier<Level> level = () -> WorldHelper.getServer().getLevel(Level.OVERWORLD);
-        SchedulerHelper.scheduleUntilLoaded(() ->
+    // Generate default configs if none are present
+    @SubscribeEvent
+    public static void initDefaultConfigs(ServerStartedEvent event)
+    {
+        if (favoredOres.get().isEmpty())
         {
-            if (favoredOres.get().isEmpty())
-            {
-                List<? extends List<?>> defaultOres = ForgeRegistries.BLOCKS.getValues().stream()
-                                                      .filter(block -> block.builtInRegistryHolder().is(Tags.Blocks.ORES_IN_GROUND_STONE))
-                                                      .map(ore ->
-                                                      {
-                                                          String oreName = ConfigSettings.stripOreName(ForgeRegistries.BLOCKS.getKey(ore).getPath());
-                                                          return List.of(oreName, List.of("all"), List.of("all"), List.of("all"));
-                                                      })
-                                                      .distinct().toList();
-                favoredOres.set(defaultOres);
-                SPEC.save();
-            }
-        }, 5, level, () -> level.get().getSharedSpawnPos());
+            Level overworld = event.getServer().getLevel(Level.OVERWORLD);
+            if (overworld == null) return;
+            Registry<PlacedFeature> configuredFeatureRegistry = event.getServer().registryAccess().registryOrThrow(Registries.PLACED_FEATURE);
+            List<? extends List<?>> defaultOres =
+                configuredFeatureRegistry.holders()
+                .filter(feature ->
+                {
+                    PlacedFeature placement = feature.value();
+                    ConfiguredFeature<?, ?> config = placement.feature().value();
+                    RandomSource random = RandomSource.create();
+                    return config.config() instanceof OreConfiguration oreConfig
+                        && oreConfig.targetStates.stream().anyMatch(target -> target.state.is(Tags.Blocks.ORES))
+                        && oreConfig.targetStates.stream().anyMatch(target -> target.target.test(Blocks.STONE.defaultBlockState(), random) || target.target.test(Blocks.DEEPSLATE.defaultBlockState(), random));
+                })
+                .flatMap(feature -> ((OreConfiguration) feature.value().feature().value().config()).targetStates.stream().map(target -> target.state))
+                .map(state -> {
+                    String oreName = ConfigSettings.stripOreName(ForgeRegistries.BLOCKS.getKey(state.getBlock()).getPath());
+                    return List.of(oreName, List.of("all"), List.of("all"), List.of("all"));
+                })
+                .distinct()
+                .toList();
+            favoredOres.set(defaultOres);
+            SPEC.save();
+        }
     }
 
     public static void setup()
