@@ -88,22 +88,24 @@ public class InventoryDeathBagHandler
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onPlayerDrops(LivingDropsEvent event)
     {
+        if (!MainSettingsConfig.enableDeathBag.get()) return;
+
         if (event.getEntity() instanceof Player player)
         {
             // Fill bag with dropped items
             ItemStack bag = new ItemStack(ItemInit.BAG_OF_THE_PERISHED.get());
-            bag.getCapability(ModCapabilities.DEATH_POUCH_ITEMS).ifPresent(cap ->
+            IBagCap cap = bag.getCapability(ModCapabilities.DEATH_POUCH_ITEMS).orElse(null);
+            if (cap == null) return;
+            event.getDrops().removeIf(drop ->
             {
-                event.getDrops().removeIf(drop ->
-                {
-                    ItemStack dropStack = drop.getItem();
-                    if (!dropStack.isEmpty() && !dropStack.is(ItemInit.BAG_OF_THE_PERISHED.get()))
-                    {   cap.addItem(dropStack.copy());
-                        return true;
-                    }
-                    return false;
-                });
+                ItemStack dropStack = drop.getItem();
+                if (!dropStack.isEmpty() && !dropStack.is(ItemInit.BAG_OF_THE_PERISHED.get()))
+                {   cap.addItem(dropStack.copy());
+                    return true;
+                }
+                return false;
             });
+            if (cap.getItems().isEmpty()) return;
             // Spawn bag item
             bag.getOrCreateTag().putUUID("Owner", player.getUUID());
             bag.getOrCreateTag().putUUID("ID", UUID.randomUUID());

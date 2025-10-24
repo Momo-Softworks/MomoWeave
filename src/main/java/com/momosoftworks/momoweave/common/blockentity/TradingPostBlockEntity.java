@@ -1,6 +1,7 @@
 package com.momosoftworks.momoweave.common.blockentity;
 
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
+import com.momosoftworks.momoweave.config.MainSettingsConfig;
 import com.momosoftworks.momoweave.core.init.BlockEntityInit;
 import com.momosoftworks.momoweave.core.init.BlockInit;
 import com.momosoftworks.momoweave.event.common.EntityRemovedEvent;
@@ -52,7 +53,8 @@ public class TradingPostBlockEntity extends BlockEntity
             if (!level.isDay())
             {   this.hasBeenNight = true;
             }
-            if (this.hasBeenNight && level.isDay() && this.trader == null)
+            if (this.hasBeenNight && level.isDay() && this.trader == null
+            && MainSettingsConfig.enableTradingPost.get())
             {
                 BlockPos spawnPos = findSafeSpawnPos(level, pos);
                 if (spawnPos == null)

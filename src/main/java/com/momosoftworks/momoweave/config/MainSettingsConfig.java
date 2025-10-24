@@ -33,6 +33,8 @@ public class MainSettingsConfig
     public static final ForgeConfigSpec.DoubleValue lootRollMultiplier;
 
     public static final ForgeConfigSpec.IntValue bagExpirationTime;
+    public static final ForgeConfigSpec.BooleanValue enableDeathBag;
+    public static final ForgeConfigSpec.BooleanValue enableTradingPost;
     public static final ForgeConfigSpec.ConfigValue<? extends List<? extends String>> worthlessTraderItems;
     public static final ForgeConfigSpec.ConfigValue<? extends List<? extends String>> cheapTraderItems;
     public static final ForgeConfigSpec.ConfigValue<? extends List<? extends String>> costlyTraderItems;
@@ -122,10 +124,17 @@ public class MainSettingsConfig
         BUILDER.pop();
 
         BUILDER.push("Death");
+
             bagExpirationTime = BUILDER
                 .comment("Controls the time in ticks (20 ticks = 1 second) before a Bag of the Perished despawns.",
                          "Set to 0 to disable despawning.")
                 .defineInRange("Bag Expiration Time (ticks)", 6000, 0, Integer.MAX_VALUE);
+            enableDeathBag = BUILDER
+                .comment("If true, the Bag of the Perished item will be enabled.")
+                .define("Enable Bag of the Perished", true);
+            enableTradingPost = BUILDER
+                .comment("If true, the Trading Post block will be enabled.")
+                .define("Enable Trading Post", true);
             worthlessTraderItems = BUILDER
                 .comment("Items in the lowest tier of wandering trader buy-back items.",
                          "Wandering traders will charge these items if you have near-useless items in your Bag of the Perished")
