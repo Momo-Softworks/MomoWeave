@@ -1,0 +1,31 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern":
+  [
+    "RB",
+    "LL",
+    "LL"
+  ],
+  "key":
+  {
+    "R":
+    {
+      "tag": "forge:dyes/red"
+    },
+    "B":
+    {
+      "tag": "forge:dyes/blue"
+    },
+    "L":
+    {
+      "tag": "minecraft:logs"
+    }
+  },
+  "result":
+  {
+    "item": "momoweave:trading_post",
+    "count": 1
+  },
+  "show_notification": true  
+}

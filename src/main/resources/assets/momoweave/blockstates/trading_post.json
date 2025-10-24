@@ -1,0 +1,9 @@
+{
+  "variants":
+  {
+    "":
+    {
+      "model": "momoweave:block/trading_post"
+    }
+  }
+}

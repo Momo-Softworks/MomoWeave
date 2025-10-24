@@ -32,6 +32,14 @@ public class MainSettingsConfig
 
     public static final ForgeConfigSpec.DoubleValue lootRollMultiplier;
 
+    public static final ForgeConfigSpec.IntValue bagExpirationTime;
+    public static final ForgeConfigSpec.ConfigValue<? extends List<? extends String>> worthlessTraderItems;
+    public static final ForgeConfigSpec.ConfigValue<? extends List<? extends String>> cheapTraderItems;
+    public static final ForgeConfigSpec.ConfigValue<? extends List<? extends String>> costlyTraderItems;
+    public static final ForgeConfigSpec.ConfigValue<? extends List<? extends String>> extortionateTraderItems;
+
+    public static final ForgeConfigSpec.BooleanValue preventSleep;
+
     public static final ForgeConfigSpec.IntValue maxTickingMonsterDistance;
 
     static
@@ -107,10 +115,43 @@ public class MainSettingsConfig
         BUILDER.push("Loot");
 
         lootRollMultiplier = BUILDER
-                .comment("Controls the multiplier for the number of items that will be rolled in a loot table.",
+                .comment("Controls the multiplier for the number of items that will be rolled in dungeon loot tables.",
                          "This value is multiplied by the default number of items rolled in the loot table.")
                 .defineInRange("Loot Roll Multiplier", 0.5, 0.0, Double.POSITIVE_INFINITY);
 
+        BUILDER.pop();
+
+        BUILDER.push("Death");
+            bagExpirationTime = BUILDER
+                .comment("Controls the time in ticks (20 ticks = 1 second) before a Bag of the Perished despawns.",
+                         "Set to 0 to disable despawning.")
+                .defineInRange("Bag Expiration Time (ticks)", 6000, 0, Integer.MAX_VALUE);
+            worthlessTraderItems = BUILDER
+                .comment("Items in the lowest tier of wandering trader buy-back items.",
+                         "Wandering traders will charge these items if you have near-useless items in your Bag of the Perished")
+                .defineList("Worthless Trader Items", List.of("minecraft:copper_ingot", "minecraft:coal"),
+                            it -> it instanceof String);
+            cheapTraderItems = BUILDER
+                .comment("Items in the cheap tier of wandering trader buy-back items.",
+                         "Wandering traders will charge these items if you have low-value items in your Bag of the Perished")
+                .defineList("Cheap Trader Items", List.of("minecraft:iron_ingot", "minecraft:redstone"),
+                            it -> it instanceof String);
+            costlyTraderItems = BUILDER
+                .comment("Items in the costly tier of wandering trader buy-back items.",
+                         "Wandering traders will charge these items if you have mid-value items in your Bag of the Perished")
+                .defineList("Costly Trader Items", List.of("minecraft:gold_ingot", "minecraft:lapis_lazuli"),
+                            it -> it instanceof String);
+            extortionateTraderItems = BUILDER
+                .comment("Items in the extortionate tier of wandering trader buy-back items.",
+                         "Wandering traders will charge these items if you have high-value items in your Bag of the Perished")
+                .defineList("Extortionate Trader Items", List.of("minecraft:diamond", "minecraft:emerald"),
+                            it -> it instanceof String);
+        BUILDER.pop();
+
+        BUILDER.push("Sleeping");
+            preventSleep = BUILDER
+                .comment("If true, players will be prevented from sleeping in beds.")
+                .define("Prevent Sleep", true);
         BUILDER.pop();
 
         SPEC = BUILDER.build();

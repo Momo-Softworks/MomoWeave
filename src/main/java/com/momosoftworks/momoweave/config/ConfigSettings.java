@@ -2,6 +2,10 @@ package com.momosoftworks.momoweave.config;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.mojang.datafixers.util.Either;
+import com.momosoftworks.coldsweat.data.codec.util.NegatableList;
+import com.momosoftworks.coldsweat.util.math.CSMath;
+import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import com.momosoftworks.coldsweat.util.serialization.DynamicHolder;
 import com.momosoftworks.momoweave.Momoweave;
 import com.momosoftworks.momoweave.data.biome_modifier.ExtraOresBiomeModifier;
@@ -12,18 +16,18 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
-import net.minecraft.world.level.levelgen.feature.OreFeature;
-import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguration;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
-import net.minecraftforge.common.Tags;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 @Mod.EventBusSubscriber
 public class ConfigSettings
@@ -32,8 +36,22 @@ public class ConfigSettings
     public static final Multimap<Holder<Biome>, Block> FAVORED_ORE_BLOCKS_PER_BIOME = HashMultimap.create();
 
     public static final DynamicHolder<Double> FAVORED_ORE_MULTIPLIER = DynamicHolder.create(null, MainSettingsConfig.favoredOreMultiplier);
-    public static final DynamicHolder<Double> UNFAVORED_ORE_MULTIPLIER = DynamicHolder.create(null,MainSettingsConfig.unfavoredOreMultiplier);
-    public static final DynamicHolder<List<? extends Integer>> FAVORED_ORE_COUNT_PER_BIOME = DynamicHolder.create(null,MainSettingsConfig.favoredOresPerBiome);
+    public static final DynamicHolder<Double> UNFAVORED_ORE_MULTIPLIER = DynamicHolder.create(null, MainSettingsConfig.unfavoredOreMultiplier);
+    public static final DynamicHolder<List<? extends Integer>> FAVORED_ORE_COUNT_PER_BIOME = DynamicHolder.create(null, MainSettingsConfig.favoredOresPerBiome);
+    public static final DynamicHolder<Map<ItemPrice, List<Item>>> TRADER_BUYBACK_ITEMS = DynamicHolder.create(null, () ->
+    {
+        Map<ItemPrice, List<Item>> map = new HashMap<>();
+        Function<NegatableList<Either<TagKey<Item>, Item>>, List<Item>> itemGetter = list ->
+            list.flatMap(either -> either.map(tag -> ForgeRegistries.ITEMS.tags().getTag(tag).stream().toList(), List::of),
+                         CSMath::append,
+                         List::removeAll)
+                .orElse(List.of());
+        map.put(ItemPrice.WORTHLESS, itemGetter.apply(ConfigHelper.getItems(MainSettingsConfig.worthlessTraderItems.get().toArray(String[]::new))));
+        map.put(ItemPrice.CHEAP, itemGetter.apply(ConfigHelper.getItems(MainSettingsConfig.cheapTraderItems.get().toArray(String[]::new))));
+        map.put(ItemPrice.COSTLY, itemGetter.apply(ConfigHelper.getItems(MainSettingsConfig.costlyTraderItems.get().toArray(String[]::new))));
+        map.put(ItemPrice.EXTORTIONATE, itemGetter.apply(ConfigHelper.getItems(MainSettingsConfig.extortionateTraderItems.get().toArray(String[]::new))));
+        return map;
+    });
 
     public static Map<ResourceLocation, OreClimateSettings> getQualifyingOresForBiome(Holder<Biome> biome)
     {
