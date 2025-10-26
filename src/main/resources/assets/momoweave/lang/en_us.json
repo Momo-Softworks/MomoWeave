@@ -1,4 +1,6 @@
 {
   "item.momoweave.rotten_leather": "Rotten Leather",
-  "item.momoweave.bag_of_the_perished": "Bag of the Perished"
+  "item.momoweave.bag_of_the_perished": "Bag of the Perished",
+  "block.momoweave.trading_post": "Trading Post",
+  "tooltip.momoweave.bag_of_the_perished": "Items of %s"
 }

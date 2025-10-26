@@ -3,11 +3,11 @@ package com.momosoftworks.momoweave.mixin;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.momoweave.common.capability.ModCapabilities;
 import com.momosoftworks.momoweave.common.level.SavedDataHelper;
+import com.momosoftworks.momoweave.config.ItemPrice;
+import com.momosoftworks.momoweave.config.ConfigSettings;
 import com.momosoftworks.momoweave.core.init.ItemInit;
-import com.momosoftworks.momoweave.data.tag.ModItemTags;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -18,7 +18,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.trading.MerchantOffer;
-import net.minecraftforge.registries.ForgeRegistries;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -48,15 +47,16 @@ public class MixinAddWanderingTrades
 
     private static ItemStack getCostForValue(int value)
     {
-        TagKey<Item> pool = switch (value)
+        List<Item> pool = switch (value)
         {
-            case 0 -> ModItemTags.BUYBACK_PIDDLING;
-            case 1 -> ModItemTags.BUYBACK_CHEAP;
-            case 2 -> ModItemTags.BUYBACK_COSTLY;
-            default -> ModItemTags.BUYBACK_EXTORTIONATE;
+            case 0 -> ConfigSettings.TRADER_BUYBACK_ITEMS.get().get(ItemPrice.WORTHLESS);
+            case 1 -> ConfigSettings.TRADER_BUYBACK_ITEMS.get().get(ItemPrice.CHEAP);
+            case 2 -> ConfigSettings.TRADER_BUYBACK_ITEMS.get().get(ItemPrice.COSTLY);
+            default -> ConfigSettings.TRADER_BUYBACK_ITEMS.get().get(ItemPrice.EXTORTIONATE);
         };
-        Item item = ForgeRegistries.ITEMS.tags().getTag(pool).getRandomElement(RandomSource.create()).get();
-        return new ItemStack(item, RandomSource.create().nextIntBetweenInclusive(1, Math.min(8, item.getMaxStackSize())));
+        RandomSource rand = RandomSource.create();
+        Item item = pool.get(rand.nextInt(0, pool.size()));
+        return new ItemStack(item, RandomSource.create().nextIntBetweenInclusive(1, Math.min(8, item.getDefaultInstance().getMaxStackSize())));
     }
 
     private static int getToolHarvestLevel(ItemStack itemStack)

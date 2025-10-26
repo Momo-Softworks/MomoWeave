@@ -2,6 +2,7 @@ package com.momosoftworks.momoweave.core.init;
 
 import com.momosoftworks.momoweave.Momoweave;
 import com.momosoftworks.momoweave.common.item.BagOfThePerishedItem;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
 import net.minecraftforge.registries.DeferredRegister;
@@ -18,4 +19,6 @@ public class ItemInit
                                                                             () -> new BagOfThePerishedItem(new Item.Properties()
                                                                                                            .stacksTo(1)
                                                                                                            .rarity(Rarity.UNCOMMON)));
+
+    public static RegistryObject<Item> TRADING_POST = ITEMS.register("trading_post", () -> new BlockItem(BlockInit.TRADING_POST.get(), new Item.Properties()));
 }

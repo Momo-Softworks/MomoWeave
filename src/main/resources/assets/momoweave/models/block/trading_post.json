@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "up": "momoweave:block/trading_post_top",
+    "down": "minecraft:block/oak_planks",
+    "north": "momoweave:block/trading_post_front",
+    "south": "momoweave:block/trading_post_front",
+    "east": "momoweave:block/trading_post_side",
+    "west": "momoweave:block/trading_post_side",
+    "particle": "momoweave:block/trading_post_front"
+  }
+}

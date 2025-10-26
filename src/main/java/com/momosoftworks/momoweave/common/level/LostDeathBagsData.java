@@ -5,6 +5,7 @@ import com.google.common.collect.Multimap;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import com.momosoftworks.momoweave.Momoweave;
+import com.momosoftworks.momoweave.config.MainSettingsConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -26,8 +27,6 @@ import java.util.*;
 
 public class LostDeathBagsData extends SavedData
 {
-    public static final int BAG_EXPIRATION_TIME = 20*60*7;
-
     private final Multimap<UUID, ItemStack> lostBags = HashMultimap.create();
 
     private final Map<UUID, Integer> wanderingTraderSpawnTicker = new HashMap<>();

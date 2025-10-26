@@ -22,7 +22,7 @@ public class BagOfThePerishedItem extends Item
         {
             for (ItemStack item : bag.getItems())
             {
-                if (!stack.isEmpty())
+                if (!item.isEmpty())
                 {
                     if (!player.addItem(item))
                     {   player.drop(item, false);

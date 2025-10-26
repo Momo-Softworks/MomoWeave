@@ -112,6 +112,9 @@ dependencies {
     implementation fg.deobf("curse.maven:curios-309927:5367944-sources-5367945")
     runtimeOnly fg.deobf("curse.maven:ice-and-fire-dragons-264231:5122408")
     runtimeOnly fg.deobf("curse.maven:citadel-331936:5559513")
+    implementation fg.deobf("curse.maven:luna-880620:6599106")
+    runtimeOnly fg.deobf("curse.maven:ars-nouveau-401955:6688854")
+    runtimeOnly fg.deobf("curse.maven:ars-elemental-561470:6390889")
     //runtimeOnly fg.deobf("curse.maven:mna-406360:5559768")
     //runtimeOnly fg.deobf("curse.maven:apotheosis-313970:5486368")
     //runtimeOnly "curse.maven:wythers-490686:4127875"

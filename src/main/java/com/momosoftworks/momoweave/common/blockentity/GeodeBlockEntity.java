@@ -21,22 +21,6 @@ public class GeodeBlockEntity extends BlockEntity
     public GeodeBlockEntity(BlockPos pos, BlockState state)
     {
         super(BlockEntityInit.GEODE.get(), pos, state);
-        /*SchedulerHelper.scheduleUntilLoaded(() ->
-        {
-            if (this.oreBlock == null)
-            {
-                BlockPos surfacePos = new BlockPos(this.worldPosition.getX(), WorldHelper.getHeight(this.worldPosition, this.level), this.worldPosition.getZ());
-                Holder<Biome> biome = this.level.getBiome(surfacePos);
-                Collection<Block> oresForBiome = ConfigSettings.FAVORED_ORE_BLOCKS_PER_BIOME.get(biome);
-                if (oresForBiome.isEmpty())
-                {   this.oreBlock = Blocks.STONE;
-                }
-                else
-                {   List<Block> ores = oresForBiome.stream().toList();
-                    this.oreBlock = ores.get(new Random().nextInt(ores.size()));
-                }
-            }
-        }, 5, () -> this.getLevel(), () -> this.getBlockPos());*/
     }
 
     public Block getOre()

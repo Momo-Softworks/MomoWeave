@@ -6,15 +6,18 @@ import com.momosoftworks.momoweave.common.capability.IBagCap;
 import com.momosoftworks.momoweave.common.capability.ModCapabilities;
 import com.momosoftworks.momoweave.common.level.LostDeathBagsData;
 import com.momosoftworks.momoweave.common.level.SavedDataHelper;
+import com.momosoftworks.momoweave.config.MainSettingsConfig;
 import com.momosoftworks.momoweave.core.init.ItemInit;
-import com.momosoftworks.momoweave.event.common.ItemEntityDestroyedEvent;
+import com.momosoftworks.momoweave.event.common.EntityRemovedEvent;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.npc.WanderingTrader;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -29,7 +32,9 @@ import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.event.entity.item.ItemEvent;
 import net.minecraftforge.event.entity.item.ItemExpireEvent;
+import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.player.TradeWithVillagerEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -80,19 +85,51 @@ public class InventoryDeathBagHandler
         }
     }
 
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onPlayerDrops(LivingDropsEvent event)
+    {
+        if (!MainSettingsConfig.enableDeathBag.get()) return;
+
+        if (event.getEntity() instanceof Player player)
+        {
+            // Fill bag with dropped items
+            ItemStack bag = new ItemStack(ItemInit.BAG_OF_THE_PERISHED.get());
+            IBagCap cap = bag.getCapability(ModCapabilities.DEATH_POUCH_ITEMS).orElse(null);
+            if (cap == null) return;
+            event.getDrops().removeIf(drop ->
+            {
+                ItemStack dropStack = drop.getItem();
+                if (!dropStack.isEmpty() && !dropStack.is(ItemInit.BAG_OF_THE_PERISHED.get()))
+                {   cap.addItem(dropStack.copy());
+                    return true;
+                }
+                return false;
+            });
+            if (cap.getItems().isEmpty()) return;
+            // Spawn bag item
+            bag.getOrCreateTag().putUUID("Owner", player.getUUID());
+            bag.getOrCreateTag().putUUID("ID", UUID.randomUUID());
+            bag.getOrCreateTag().putLong("DeathTime", player.level().getGameTime());
+            bag.setHoverName(Component.translatable("tooltip.momoweave.bag_of_the_perished", player.getDisplayName().getString()));
+            ItemEntity bagEntity = player.drop(bag, true, true);
+            if (bagEntity != null)
+            {   bagEntity.setGlowingTag(true);
+                bagEntity.lifespan = MainSettingsConfig.bagExpirationTime.get();
+                player.level().addFreshEntity(bagEntity);
+            }
+        }
+    }
+
     @SubscribeEvent
     public static void updateForcedChunksIfBagMoves(EntityEvent.EnteringSection event)
     {
-        Entity entity = event.getEntity();
-        if (entity instanceof ItemEntity itemEntity)
+        if (event.getEntity() instanceof ItemEntity itemEntity
+        && itemEntity.getItem().is(ItemInit.BAG_OF_THE_PERISHED.get()))
         {
-            if (itemEntity.getItem().is(ItemInit.BAG_OF_THE_PERISHED.get()))
-            {
-                ChunkPos oldPos = new ChunkPos(event.getOldPos().x(), event.getOldPos().z());
-                ChunkPos newPos = new ChunkPos(event.getNewPos().x(), event.getNewPos().z());
-                entity.level().getChunkSource().updateChunkForced(oldPos, false);
-                entity.level().getChunkSource().updateChunkForced(newPos, true);
-            }
+            ChunkPos oldPos = new ChunkPos(event.getOldPos().x(), event.getOldPos().z());
+            ChunkPos newPos = new ChunkPos(event.getNewPos().x(), event.getNewPos().z());
+            itemEntity.level().getChunkSource().updateChunkForced(oldPos, false);
+            itemEntity.level().getChunkSource().updateChunkForced(newPos, true);
         }
     }
 
@@ -120,36 +157,34 @@ public class InventoryDeathBagHandler
     }
 
     @SubscribeEvent
-    public static void onBagDespawn(ItemExpireEvent event)
-    {   handleDespawnedDeathBag(event);
-    }
-
-    @SubscribeEvent
-    public static void onBagDestroyed(ItemEntityDestroyedEvent event)
-    {   handleDespawnedDeathBag(event);
-    }
-
-    private static void handleDespawnedDeathBag(ItemEvent event)
+    public static void onBagDestroyed(EntityRemovedEvent event)
     {
-        ItemStack stack = event.getEntity().getItem();
-        ServerLevel overworld = event.getEntity().getServer().overworld();
-        if (stack.is(ItemInit.BAG_OF_THE_PERISHED.get()))
+        if (event.getEntity() instanceof ItemEntity itemEntity)
         {
-            UUID uuid = stack.getOrCreateTag().getUUID("Owner");
-            LostDeathBagsData lostBagData = SavedDataHelper.getLostDeathBags(overworld);
-            lostBagData.addLostBag(uuid, stack.copy());
-            lostBagData.scheduleWanderingTrader(uuid);
+            ItemStack stack = itemEntity.getItem();
+            ServerLevel overworld = event.getEntity().getServer().overworld();
+            if (stack.is(ItemInit.BAG_OF_THE_PERISHED.get()))
+            {
+                if (!stack.getOrCreateTag().hasUUID("Owner"))
+                {   Momoweave.LOGGER.warn("Death bag without owner UUID despawned/destroyed!");
+                    return;
+                }
+                UUID uuid = stack.getOrCreateTag().getUUID("Owner");
+                LostDeathBagsData lostBagData = SavedDataHelper.getLostDeathBags(overworld);
+                lostBagData.addLostBag(uuid, stack.copy());
+                lostBagData.scheduleWanderingTrader(uuid);
+            }
         }
     }
 
     @SubscribeEvent
     public static void onTradeWithWanderingTrader(TradeWithVillagerEvent event)
     {
-        if (event.getAbstractVillager() instanceof WanderingTrader trader && event.getMerchantOffer().getResult().is(ItemInit.BAG_OF_THE_PERISHED.get()))
+        ItemStack result = event.getMerchantOffer().getResult();
+        if (event.getAbstractVillager() instanceof WanderingTrader trader && result.is(ItemInit.BAG_OF_THE_PERISHED.get()))
         {
             UUID playerId = event.getEntity().getUUID();
-            ItemStack bag = event.getMerchantOffer().getResult();
-            SavedDataHelper.getLostDeathBags((ServerLevel) trader.level()).removeLostBag(playerId, bag);
+            SavedDataHelper.getLostDeathBags((ServerLevel) trader.level()).removeLostBag(playerId, result);
             trader.getPersistentData().getCompound("DeathBags").remove(playerId.toString());
         }
     }
