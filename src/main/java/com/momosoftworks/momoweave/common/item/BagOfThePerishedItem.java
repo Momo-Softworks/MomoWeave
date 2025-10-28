@@ -18,6 +18,7 @@ public class BagOfThePerishedItem extends Item
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand)
     {
         ItemStack stack = player.getItemInHand(hand);
+        player.giveExperiencePoints(stack.getOrCreateTag().getInt("Experience"));
         stack.getCapability(ModCapabilities.DEATH_POUCH_ITEMS).ifPresent(bag ->
         {
             for (ItemStack item : bag.getItems())

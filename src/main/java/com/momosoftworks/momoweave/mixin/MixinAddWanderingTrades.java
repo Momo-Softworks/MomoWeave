@@ -2,11 +2,12 @@ package com.momosoftworks.momoweave.mixin;
 
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.momoweave.common.capability.ModCapabilities;
-import com.momosoftworks.momoweave.common.level.SavedDataHelper;
+import com.momosoftworks.momoweave.common.event.DeathBagHandler;
+import com.momosoftworks.momoweave.common.level.save_data.LostDeathBagsData;
+import com.momosoftworks.momoweave.common.level.save_data.SavedDataHelper;
 import com.momosoftworks.momoweave.config.ItemPrice;
 import com.momosoftworks.momoweave.config.ConfigSettings;
 import com.momosoftworks.momoweave.core.init.ItemInit;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
@@ -34,9 +35,10 @@ public class MixinAddWanderingTrades
     private void addWanderingTrades(Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir)
     {
         self.getOffers().removeIf(trade -> trade.getResult().is(ItemInit.BAG_OF_THE_PERISHED.get()));
-        Collection<ItemStack> bags = SavedDataHelper.getLostDeathBags(((ServerLevel) self.level())).getLostBags().get(player.getUUID());
-        for (ItemStack bag : bags)
+        Collection<LostDeathBagsData.BagData> bags = SavedDataHelper.getLostDeathBags(((ServerLevel) self.level())).getLostBags().get(player.getUUID());
+        for (LostDeathBagsData.BagData bagData : bags)
         {
+            ItemStack bag = bagData.bag();
             bag.getCapability(ModCapabilities.DEATH_POUCH_ITEMS).ifPresent(cap ->
             {
                 ItemStack[] charges = getChargesForPlayer(player, bag);
@@ -72,18 +74,9 @@ public class MixinAddWanderingTrades
 
     private ItemStack[] getChargesForPlayer(Player player, ItemStack bag)
     {
-        CompoundTag deathBags = self.getPersistentData().getCompound("DeathBags");
-        ItemStack[] charges = {ItemStack.EMPTY, ItemStack.EMPTY};
+        ItemStack[] charges = DeathBagHandler.getBagCharges(self, player.getUUID(), bag);
 
-        // If the charges for this player have been set, use them
-        if (deathBags.contains(player.getUUID().toString()))
-        {
-            CompoundTag playerDeathBag = deathBags.getCompound(player.getUUID().toString());
-            charges[0] = ItemStack.of(playerDeathBag.getCompound("charge0"));
-            charges[1] = ItemStack.of(playerDeathBag.getCompound("charge1"));
-        }
-        // Otherwise, calculate the charges and set them
-        else
+        if (charges[0].isEmpty() && charges[1].isEmpty())
         {
             bag.getCapability(ModCapabilities.DEATH_POUCH_ITEMS).ifPresent(cap ->
             {
@@ -138,12 +131,7 @@ public class MixinAddWanderingTrades
                 {   charges[1] = getCostForValue(chargeLevels[1]);
                 }
             });
-            // Store the charges for this player
-            CompoundTag playerDeathBag = new CompoundTag();
-            playerDeathBag.put("charge0", charges[0].save(new CompoundTag()));
-            playerDeathBag.put("charge1", charges[1].save(new CompoundTag()));
-            deathBags.put(player.getUUID().toString(), playerDeathBag);
-            self.getPersistentData().put("DeathBags", deathBags);
+            DeathBagHandler.addBagCharge(self, player.getUUID(), bag, charges[0], charges[1]);
         }
         return charges;
     }

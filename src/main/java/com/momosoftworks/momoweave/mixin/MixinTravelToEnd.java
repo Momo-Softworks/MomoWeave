@@ -1,7 +1,7 @@
 package com.momosoftworks.momoweave.mixin;
 
-import com.momosoftworks.momoweave.common.level.EndEntryPoints;
-import com.momosoftworks.momoweave.common.level.SavedDataHelper;
+import com.momosoftworks.momoweave.common.level.save_data.EndEntryPoints;
+import com.momosoftworks.momoweave.common.level.save_data.SavedDataHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;

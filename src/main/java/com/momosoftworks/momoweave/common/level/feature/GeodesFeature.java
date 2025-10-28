@@ -1,4 +1,4 @@
-package com.momosoftworks.momoweave.common.world.feature;
+package com.momosoftworks.momoweave.common.level.feature;
 
 import com.mojang.serialization.Codec;
 import com.momosoftworks.coldsweat.util.math.CSMath;
@@ -17,10 +17,9 @@ import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 
-public class SurfaceOresFeature extends Feature<NoneFeatureConfiguration>
+public class GeodesFeature extends Feature<NoneFeatureConfiguration>
 {
-
-    public SurfaceOresFeature(Codec<NoneFeatureConfiguration> codec)
+    public GeodesFeature(Codec<NoneFeatureConfiguration> codec)
     {   super(codec);
     }
 

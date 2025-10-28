@@ -1,4 +1,4 @@
-package com.momosoftworks.momoweave.common.level;
+package com.momosoftworks.momoweave.common.level.save_data;
 
 import com.google.common.collect.ImmutableList;
 import net.minecraft.core.BlockPos;
