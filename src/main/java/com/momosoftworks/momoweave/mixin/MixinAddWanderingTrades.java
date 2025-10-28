@@ -113,9 +113,10 @@ public class MixinAddWanderingTrades
                                                           })
                                                           .max().orElse(0),
                                                           0, 3);
+                int experienceLevel = (int) CSMath.blend(0, 3, player.experienceLevel, 0, 30);
                 Integer[] chargeLevels = new Integer[2];
 
-                for (int level : List.of(highestEnchantmentValue, highestRarity, highestHarvestLevel, highestProtectionLevel))
+                for (int level : List.of(highestEnchantmentValue, highestRarity, highestHarvestLevel, highestProtectionLevel, experienceLevel))
                 {
                     for (int i = 0; i < chargeLevels.length; i++)
                     {
