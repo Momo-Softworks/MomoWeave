@@ -29,7 +29,7 @@ public class TradingPostBlockEntity extends BlockEntity
 {
     private int ticksExisted = 0;
     private boolean hasBeenNight = false;
-    private LivingEntity trader = null;
+    private UUID traderUUID = null; // Store UUID instead of direct reference
 
     public TradingPostBlockEntity(BlockPos pos, BlockState state)
     {   super(BlockEntityInit.TRADING_POST.get(), pos, state);
@@ -46,39 +46,104 @@ public class TradingPostBlockEntity extends BlockEntity
     {
         if (!level.isClientSide && this.ticksExisted % 20 == 0)
         {
-            if (this.trader != null
-            && (this.trader.getRemovalReason() == Entity.RemovalReason.KILLED || this.trader.getRemovalReason() == Entity.RemovalReason.DISCARDED))
-            {   this.trader = null;
+            // Check if our tracked trader still exists
+            WanderingTrader trader = this.getTrader(level);
+            if (trader != null && trader.isRemoved())
+            {
+                this.traderUUID = null;
+                trader = null;
             }
+
             if (!level.isDay())
             {   this.hasBeenNight = true;
             }
-            if (this.hasBeenNight && level.isDay() && this.trader == null
+
+            // Spawn trader at dawn if we don't have one
+            if (this.hasBeenNight && level.isDay() && trader == null
             && MainSettingsConfig.enableTradingPost.get())
             {
-                BlockPos spawnPos = findSafeSpawnPos(level, pos);
-                if (spawnPos == null)
-                {   spawnPos = pos.above();
+                // Double-check: is there already a trader linked to this post that we just don't know about?
+                // (This handles the case where the trader was in an unloaded chunk)
+                trader = findExistingTraderForPost(level, pos);
+
+                if (trader != null)
+                {
+                    // Found an existing trader, just update our reference
+                    this.traderUUID = trader.getUUID();
                 }
+                else
+                {
+                    // No existing trader found, spawn a new one
+                    BlockPos spawnPos = findSafeSpawnPos(level, pos);
+                    if (spawnPos == null)
+                    {   spawnPos = pos.above();
+                    }
 
-                LivingEntity trader = EntityType.WANDERING_TRADER.create(level);
-                if (trader == null) return;
+                    trader = (WanderingTrader) EntityType.WANDERING_TRADER.create(level);
+                    if (trader == null) return;
 
-                trader.setPos(spawnPos.getCenter().add(0, -0.5, 0));
-                trader.getPersistentData().putLong("TradingPostPos", pos.asLong());
+                    trader.setPos(spawnPos.getCenter().add(0, -0.5, 0));
+                    trader.getPersistentData().putLong("TradingPostPos", pos.asLong());
 
-                this.trader = trader;
-                level.addFreshEntity(trader);
-                spawnPoofParticles(level, trader);
+                    this.traderUUID = trader.getUUID();
+                    level.addFreshEntity(trader);
+                    spawnPoofParticles(level, trader);
+                }
             }
-            else if (!level.isDay() && this.trader != null)
+            // Remove trader at night
+            else if (!level.isDay() && trader != null)
             {
-                spawnPoofParticles(level, this.trader);
-                this.trader.remove(Entity.RemovalReason.DISCARDED);
-                this.trader = null;
+                spawnPoofParticles(level, trader);
+                trader.remove(Entity.RemovalReason.DISCARDED);
+                this.traderUUID = null;
             }
         }
         this.ticksExisted++;
+    }
+
+    /**
+     * Get the trader associated with this post, if it exists and is loaded
+     */
+    @Nullable
+    private WanderingTrader getTrader(Level level)
+    {
+        if (this.traderUUID == null || !(level instanceof ServerLevel serverLevel))
+        {   return null;
+        }
+
+        Entity entity = serverLevel.getEntity(this.traderUUID);
+        if (entity instanceof WanderingTrader trader && !trader.isRemoved())
+        {   return trader;
+        }
+
+        return null;
+    }
+
+    /**
+     * Search for a trader that's already linked to this post position
+     * This is critical for handling chunk loading/unloading scenarios
+     */
+    @Nullable
+    private static WanderingTrader findExistingTraderForPost(Level level, BlockPos postPos)
+    {
+        if (!(level instanceof ServerLevel serverLevel))
+        {   return null;
+        }
+
+        // Scan all loaded entities for a wandering trader linked to this post
+        for (Entity entity : serverLevel.getAllEntities())
+        {
+            if (entity instanceof WanderingTrader trader
+                && trader.getPersistentData().contains("TradingPostPos"))
+            {
+                BlockPos traderPostPos = BlockPos.of(trader.getPersistentData().getLong("TradingPostPos"));
+                if (traderPostPos.equals(postPos) && !trader.isRemoved())
+                {
+                    return trader;
+                }
+            }
+        }
+        return null;
     }
 
     private static void spawnPoofParticles(Level level, LivingEntity entity)
@@ -110,6 +175,7 @@ public class TradingPostBlockEntity extends BlockEntity
         }
         return null;
     }
+
     @SubscribeEvent
     public static void ensureTraderDistance(LivingEvent.LivingTickEvent event)
     {
@@ -118,18 +184,27 @@ public class TradingPostBlockEntity extends BlockEntity
             if (!trader.getPersistentData().contains("TradingPostPos")) return;
             BlockPos postPos = BlockPos.of(trader.getPersistentData().getLong("TradingPostPos"));
 
-            // Teleport trader to post if very far away
-            if (postPos.distSqr(trader.blockPosition()) > 1000 || trader.level().dimension() != level.dimension())
+            // Verify the post still exists
+            BlockState stateAtPost = level.getBlockState(postPos);
+            if (!stateAtPost.is(BlockInit.TRADING_POST.get()))
             {
-                if (!level.getBlockState(postPos.above()).isAir()
-                && !level.getBlockState(postPos.above(2)).isAir())
-                {
-                    trader.changeDimension(level);
-                    trader.setPos(postPos.above().getCenter());
+                // Post was removed, despawn trader
+                trader.remove(Entity.RemovalReason.DISCARDED);
+                return;
+            }
+
+            // Teleport trader to post if very far away or in wrong dimension
+            if (postPos.distSqr(trader.blockPosition()) > 1000)
+            {
+                BlockPos teleportPos = findSafeSpawnPos(level, postPos);
+                if (teleportPos == null)
+                {   teleportPos = postPos.above();
                 }
+                trader.setPos(teleportPos.getCenter().add(0, -0.5, 0));
             }
             else if (postPos.distSqr(trader.blockPosition()) > 64)
             {
+                // Pathfind back to post
                 Path returnPath = trader.getNavigation().createPath(postPos, 4);
                 trader.getNavigation().moveTo(returnPath, 0.3);
             }
@@ -145,11 +220,15 @@ public class TradingPostBlockEntity extends BlockEntity
             BlockPos postPos = BlockPos.of(trader.getPersistentData().getLong("TradingPostPos"));
             Level level = trader.level();
             BlockState stateAtPost = level.getBlockState(postPos);
+
             if (stateAtPost.is(BlockInit.TRADING_POST.get()))
             {
                 BlockEntity blockEntity = level.getBlockEntity(postPos);
                 if (blockEntity instanceof TradingPostBlockEntity tradingPostTE)
-                {   tradingPostTE.trader = null;
+                {
+                    if (tradingPostTE.traderUUID != null && tradingPostTE.traderUUID.equals(trader.getUUID()))
+                    {   tradingPostTE.traderUUID = null;
+                    }
                 }
             }
         }
@@ -159,11 +238,12 @@ public class TradingPostBlockEntity extends BlockEntity
     public void setRemoved()
     {
         super.setRemoved();
-        if (this.trader != null && !this.trader.isRemoved())
+        WanderingTrader trader = this.getTrader(this.level);
+        if (trader != null && !trader.isRemoved())
         {
-            spawnPoofParticles(this.level, this.trader);
-            this.trader.remove(Entity.RemovalReason.DISCARDED);
-            this.trader = null;
+            spawnPoofParticles(this.level, trader);
+            trader.remove(Entity.RemovalReason.DISCARDED);
+            this.traderUUID = null;
         }
     }
 
@@ -172,8 +252,8 @@ public class TradingPostBlockEntity extends BlockEntity
     {
         super.saveAdditional(tag);
         tag.putBoolean("HasBeenNight", this.hasBeenNight);
-        if (this.trader != null)
-        {   tag.putUUID("TraderUUID", this.trader.getUUID());
+        if (this.traderUUID != null)
+        {   tag.putUUID("TraderUUID", this.traderUUID);
         }
     }
 
@@ -184,17 +264,8 @@ public class TradingPostBlockEntity extends BlockEntity
         this.hasBeenNight = tag.getBoolean("HasBeenNight");
         if (tag.hasUUID("TraderUUID"))
         {
-            UUID traderUUID = tag.getUUID("TraderUUID");
-            if (this.getLevel() instanceof ServerLevel serverLevel)
-            {
-                serverLevel.getServer().execute(() ->
-                {
-                    Entity entity = serverLevel.getEntities().get(traderUUID);
-                    if (entity instanceof LivingEntity livingEntity)
-                    {   this.trader = livingEntity;
-                    }
-                });
-            }
+            this.traderUUID = tag.getUUID("TraderUUID");
+            // Don't try to resolve the entity here - it will be resolved on next tick if loaded
         }
     }
 }
