@@ -1,6 +1,6 @@
 {
   "parent": "item/generated",
   "textures": {
-    "layer0": "momoweave:item/bag_of_the_perished"
+    "layer0": "momoweave:item/death_bag"
   }
 }

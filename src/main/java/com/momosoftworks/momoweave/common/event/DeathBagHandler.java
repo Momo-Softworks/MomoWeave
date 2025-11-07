@@ -1,20 +1,14 @@
 package com.momosoftworks.momoweave.common.event;
 
 import com.momosoftworks.momoweave.Momoweave;
-import com.momosoftworks.momoweave.common.capability.BagInventoryCap;
-import com.momosoftworks.momoweave.common.capability.IBagCap;
-import com.momosoftworks.momoweave.common.capability.ModCapabilities;
+import com.momosoftworks.momoweave.common.item.DeathBagItem;
 import com.momosoftworks.momoweave.common.level.save_data.LostDeathBagsData;
-import com.momosoftworks.momoweave.common.level.save_data.SavedDataHelper;
 import com.momosoftworks.momoweave.config.MainSettingsConfig;
 import com.momosoftworks.momoweave.core.init.ItemInit;
 import com.momosoftworks.momoweave.event.common.EntityRemovedEvent;
-import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -23,11 +17,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameRules;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import net.minecraftforge.common.capabilities.ICapabilitySerializable;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.entity.EntityEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
@@ -37,53 +26,13 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Mod.EventBusSubscriber
 public class DeathBagHandler
 {
-    @SubscribeEvent
-    public static void giveBagCapability(AttachCapabilitiesEvent<ItemStack> event)
-    {
-        if (event.getObject().getItem() == ItemInit.BAG_OF_THE_PERISHED.get())
-        {
-            // Make a new capability instance to attach to the item
-            IBagCap itemHolderCap = new BagInventoryCap();
-            // Optional that holds the capability instance
-            final LazyOptional<IBagCap> capOptional = LazyOptional.of(() -> itemHolderCap);
-            Capability<IBagCap> capability = ModCapabilities.DEATH_POUCH_ITEMS;
-
-            ICapabilityProvider provider = new ICapabilitySerializable<CompoundTag>()
-            {
-                @Nonnull
-                @Override
-                public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction direction)
-                {
-                    // If the requested cap is the insulation cap, return the insulation cap
-                    if (cap == capability)
-                    {   return capOptional.cast();
-                    }
-                    return LazyOptional.empty();
-                }
-
-                @Override
-                public CompoundTag serializeNBT()
-                {   return itemHolderCap.serializeNBT();
-                }
-
-                @Override
-                public void deserializeNBT(CompoundTag nbt)
-                {   itemHolderCap.deserializeNBT(nbt);
-                }
-            };
-
-            // Attach the capability to the item
-            event.addCapability(new ResourceLocation(Momoweave.MOD_ID, "item_holding"), provider);
-        }
-    }
-
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onPlayerDrops(LivingDropsEvent event)
     {
@@ -95,24 +44,24 @@ public class DeathBagHandler
             {   return;
             }
             // Fill bag with dropped items
-            ItemStack bag = new ItemStack(ItemInit.BAG_OF_THE_PERISHED.get());
-            IBagCap cap = bag.getCapability(ModCapabilities.DEATH_POUCH_ITEMS).orElse(null);
-            if (cap == null) return;
+            ItemStack bag = new ItemStack(ItemInit.DEATH_BAG.get());
+            List<ItemStack> droppedItems = new ArrayList<>();
             event.getDrops().removeIf(drop ->
             {
                 ItemStack dropStack = drop.getItem();
-                if (!dropStack.isEmpty() && !dropStack.is(ItemInit.BAG_OF_THE_PERISHED.get()))
-                {   cap.addItem(dropStack.copy());
+                if (!dropStack.isEmpty() && !dropStack.is(ItemInit.DEATH_BAG.get()))
+                {   droppedItems.add(dropStack.copy());
                     return true;
                 }
                 return false;
             });
-            if (cap.getItems().isEmpty() && player.totalExperience <= 0) return;
+            if (droppedItems.isEmpty() && player.totalExperience <= 0) return;
             // Spawn bag item
             CompoundTag bagNBT = bag.getOrCreateTag();
+            DeathBagItem.serializeContents(bag, droppedItems);
             bagNBT.putUUID("Owner", player.getUUID());
             bagNBT.putUUID("ID", UUID.randomUUID());
-            bagNBT.putLong("DeathTime", player.level().getGameTime());
+            bagNBT.putLong("DeathTime", System.currentTimeMillis());
             bagNBT.putInt("Experience", player.totalExperience);
             bag.setHoverName(Component.translatable("tooltip.momoweave.bag_of_the_perished", player.getDisplayName().getString()));
             ItemEntity bagEntity = player.drop(bag, true, true);
@@ -136,7 +85,7 @@ public class DeathBagHandler
     public static void updateForcedChunksIfBagMoves(EntityEvent.EnteringSection event)
     {
         if (event.getEntity() instanceof ItemEntity itemEntity
-        && itemEntity.getItem().is(ItemInit.BAG_OF_THE_PERISHED.get()) 
+        && itemEntity.getItem().is(ItemInit.DEATH_BAG.get())
         && event.didChunkChange())
         {
             ChunkPos oldPos = new ChunkPos(event.getOldPos().x(), event.getOldPos().z());
@@ -161,7 +110,7 @@ public class DeathBagHandler
         Entity entity = event.getEntity();
         if (entity instanceof ItemEntity itemEntity)
         {
-            if (itemEntity.getItem().is(ItemInit.BAG_OF_THE_PERISHED.get()))
+            if (itemEntity.getItem().is(ItemInit.DEATH_BAG.get()))
             {
                 ChunkPos chunkPos = new ChunkPos(itemEntity.blockPosition());
                 entity.level().getChunkSource().updateChunkForced(chunkPos, forced);
@@ -177,16 +126,14 @@ public class DeathBagHandler
         && event.getReason() != Entity.RemovalReason.CHANGED_DIMENSION)
         {
             ItemStack stack = itemEntity.getItem();
-            ServerLevel overworld = event.getEntity().getServer().overworld();
-            if (stack.is(ItemInit.BAG_OF_THE_PERISHED.get()))
+            if (stack.is(ItemInit.DEATH_BAG.get()))
             {
                 if (!stack.getOrCreateTag().hasUUID("Owner"))
                 {   Momoweave.LOGGER.warn("Death bag without owner UUID despawned/destroyed!");
                     return;
                 }
                 UUID uuid = stack.getOrCreateTag().getUUID("Owner");
-                LostDeathBagsData lostBagData = SavedDataHelper.getLostDeathBags(overworld);
-                lostBagData.addLostBag(uuid, stack.copy(), itemEntity.level().getGameTime());
+                LostDeathBagsData.INSTANCE.addLostBag(uuid, stack.copy(), System.currentTimeMillis());
             }
         }
     }
@@ -195,10 +142,10 @@ public class DeathBagHandler
     public static void onTradeWithWanderingTrader(TradeWithVillagerEvent event)
     {
         ItemStack result = event.getMerchantOffer().getResult();
-        if (event.getAbstractVillager() instanceof WanderingTrader trader && result.is(ItemInit.BAG_OF_THE_PERISHED.get()))
+        if (event.getAbstractVillager() instanceof WanderingTrader trader && result.is(ItemInit.DEATH_BAG.get()))
         {
             UUID playerId = event.getEntity().getUUID();
-            SavedDataHelper.getLostDeathBags((ServerLevel) trader.level()).removeLostBag(playerId, result);
+            LostDeathBagsData.INSTANCE.removeLostBag(playerId, result);
             removeBagCharge(trader, playerId, result);
         }
     }
@@ -222,7 +169,7 @@ public class DeathBagHandler
         }
     }
 
-    public static void addBagCharge(LivingEntity trader, UUID player, ItemStack bag, ItemStack charge0, ItemStack charge1)
+    public static void addBagCharge(LivingEntity trader, UUID player, LostDeathBagsData.BagData bagData, ItemStack charge0, ItemStack charge1)
     {
         CompoundTag deathBags = trader.getPersistentData().getCompound("DeathBags");
         ListTag deathBagList;
@@ -235,24 +182,25 @@ public class DeathBagHandler
         }
 
         CompoundTag deathBagTag = new CompoundTag();
-        deathBagTag.put("BagItem", bag.save(new CompoundTag()));
+        deathBagTag.putLong("LostTime", bagData.lostTime());
         deathBagTag.put("charge0", charge0.save(new CompoundTag()));
         deathBagTag.put("charge1", charge1.save(new CompoundTag()));
         deathBagList.add(deathBagTag);
         trader.getPersistentData().put("DeathBags", deathBags);
     }
 
-    public static ItemStack[] getBagCharges(LivingEntity trader, UUID player, ItemStack bag)
+    public static ItemStack[] getBagCharges(LivingEntity trader, UUID player, LostDeathBagsData.BagData bagData)
     {
         CompoundTag deathBags = trader.getPersistentData().getCompound("DeathBags");
         if (deathBags.contains(player.toString()))
         {
+            long bagLostTime = bagData.lostTime();
             ListTag deathBagList = deathBags.getList(player.toString(), 10);
             for (int i = 0; i < deathBagList.size(); i++)
             {
                 CompoundTag deathBagTag = deathBagList.getCompound(i);
-                ItemStack deathBagStack = ItemStack.of(deathBagTag.getCompound("BagItem"));
-                if (ItemStack.isSameItemSameTags(deathBagStack, bag))
+                long lostTime = deathBagTag.getLong("LostTime");
+                if (lostTime == bagLostTime)
                 {
                     ItemStack charge0 = ItemStack.of(deathBagTag.getCompound("charge0"));
                     ItemStack charge1 = ItemStack.of(deathBagTag.getCompound("charge1"));

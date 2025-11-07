@@ -11,8 +11,4 @@ public class SavedDataHelper
     public static EndInitializationStatus getInitializationStatus(ServerLevel level)
     {   return level.getDataStorage().computeIfAbsent(EndInitializationStatus::load, EndInitializationStatus::new, "momo:end_initialization_status");
     }
-
-    public static LostDeathBagsData getLostDeathBags(ServerLevel level)
-    {   return level.getDataStorage().computeIfAbsent(LostDeathBagsData::load, LostDeathBagsData::new, "momo:lost_death_bags");
-    }
 }
