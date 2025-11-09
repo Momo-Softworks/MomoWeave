@@ -3,6 +3,7 @@ package com.momosoftworks.momoweave.core.init;
 import com.mojang.brigadier.CommandDispatcher;
 import com.momosoftworks.coldsweat.common.command.BaseCommand;
 import com.momosoftworks.momoweave.common.command.impl.LootTablesCommand;
+import com.momosoftworks.momoweave.common.command.impl.RecoverItemsCommand;
 import com.momosoftworks.momoweave.common.command.impl.WhereAmICommand;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraftforge.event.RegisterCommandsEvent;
@@ -23,6 +24,7 @@ public class CommandInit
 
         COMMANDS.add(new WhereAmICommand("whereami", 2, true));
         COMMANDS.add(new LootTablesCommand("showloottables", 2, true));
+        COMMANDS.add(new RecoverItemsCommand("recoveritems", 2, true));
 
         COMMANDS.forEach(command ->
         {

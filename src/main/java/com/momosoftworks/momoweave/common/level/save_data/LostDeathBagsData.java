@@ -5,6 +5,7 @@ import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.momoweave.Momoweave;
@@ -18,6 +19,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.loading.FMLPaths;
 import org.apache.commons.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileReader;
@@ -34,7 +36,7 @@ import java.util.*;
 public class LostDeathBagsData
 {
     public static final LostDeathBagsData INSTANCE = new LostDeathBagsData();
-    private static DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm");
+    public static DateTimeFormatter TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
 
     @SubscribeEvent
     public static void onServerStarting(ServerStartingEvent event)
@@ -84,25 +86,29 @@ public class LostDeathBagsData
             {   Momoweave.LOGGER.error("Failed to create directory for lost death bags of user: {}", uuid);
             }
             for (BagData bag : bags)
-            {
-                JsonElement bagJson = BagData.CODEC.encodeStart(encoderOps, bag).result().orElse(null);
-                if (bagJson != null && bagJson.isJsonObject())
-                {
-                    Instant instant = Instant.ofEpochMilli(bag.lostTime());
-                    LocalDateTime dateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
-                    String formattedTime = dateTime.format(TIMESTAMP_FORMATTER);
-                    String fileName = "bag_" + formattedTime + ".json";
-                    File bagFile = userDirectory.toPath().resolve(fileName).toFile();
-                    Gson gson = new Gson();
-                    try (FileWriter writer = new FileWriter(bagFile))
-                    {   gson.toJson(bagJson, writer);
-                    }
-                    catch (IOException e)
-                    {   Momoweave.LOGGER.error("Failed to save lost death bag for user: {}", uuid, e);
-                    }
-                }
+            {   saveBag(encoderOps, bag, uuid, userDirectory);
             }
         });
+    }
+
+    public static void saveBag(DynamicOps<JsonElement> encoderOps, BagData bag, UUID playerID, File userDirectory)
+    {
+        JsonElement bagJson = BagData.CODEC.encodeStart(encoderOps, bag).result().orElse(null);
+        if (bagJson != null && bagJson.isJsonObject())
+        {
+            Instant instant = Instant.ofEpochMilli(bag.lostTime());
+            LocalDateTime dateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+            String formattedTime = dateTime.format(TIMESTAMP_FORMATTER);
+            String fileName = "bag_" + formattedTime + ".json";
+            File bagFile = userDirectory.toPath().resolve(fileName).toFile();
+            Gson gson = new Gson();
+            try (FileWriter writer = new FileWriter(bagFile))
+            {   gson.toJson(bagJson, writer);
+            }
+            catch (IOException e)
+            {   Momoweave.LOGGER.error("Failed to save lost death bag for user: {}", playerID, e);
+            }
+        }
     }
 
     public void load(RegistryAccess registryAccess)
@@ -126,17 +132,9 @@ public class LostDeathBagsData
                         {
                             for (File bagFile : bagFiles)
                             {
-                                try (FileReader reader = new FileReader(bagFile))
-                                {
-                                    Gson gson = new Gson();
-                                    JsonElement bagJson = gson.fromJson(reader, JsonElement.class);
-                                    BagData bagData = BagData.CODEC.parse(decoderOps, bagJson).result().orElse(null);
-                                    if (bagData != null)
-                                    {   lostBags.put(uuid, bagData);
-                                    }
-                                }
-                                catch (IOException e)
-                                {   Momoweave.LOGGER.error("Failed to load lost death bag from file: {}", bagFile.getName(), e);
+                                BagData bagData = loadBag(decoderOps, bagFile);
+                                if (bagData != null)
+                                {   this.lostBags.put(uuid, bagData);
                                 }
                             }
                         }
@@ -147,6 +145,24 @@ public class LostDeathBagsData
                 }
             }
         }
+    }
+
+    @Nullable
+    public static BagData loadBag(DynamicOps<JsonElement> decoderOps, File bagFile)
+    {
+        try (FileReader reader = new FileReader(bagFile))
+        {
+            Gson gson = new Gson();
+            JsonElement bagJson = gson.fromJson(reader, JsonElement.class);
+            BagData bagData = BagData.CODEC.parse(decoderOps, bagJson).result().orElse(null);
+            if (bagData != null)
+            {   return bagData;
+            }
+        }
+        catch (IOException e)
+        {   Momoweave.LOGGER.error("Failed to load lost death bag from file: {}", bagFile.getName(), e);
+        }
+        return null;
     }
 
     public record BagData(ItemStack bag, long lostTime)

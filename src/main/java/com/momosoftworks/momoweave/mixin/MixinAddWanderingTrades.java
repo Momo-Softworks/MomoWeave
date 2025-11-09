@@ -32,7 +32,7 @@ public class MixinAddWanderingTrades
     @Inject(method = "mobInteract", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/npc/WanderingTrader;setTradingPlayer(Lnet/minecraft/world/entity/player/Player;)V", shift = At.Shift.AFTER))
     private void addWanderingTrades(Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir)
     {
-        self.getOffers().removeIf(trade -> trade.getResult().is(ItemInit.DEATH_BAG.get()));
+        self.getOffers().removeIf(trade -> trade.getResult().is(ItemInit.DEATH_BAG.get()) || trade.getResult().isEmpty());
         Collection<LostDeathBagsData.BagData> bags = LostDeathBagsData.INSTANCE.getLostBags(player);
         for (LostDeathBagsData.BagData bagData : bags)
         {
